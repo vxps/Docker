@@ -1,0 +1,49 @@
+# tasks file for docker
+- name: Install and Configure Docker
+  hosts: app
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ docker_installing_packages }}"
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: "{{ docker_gpg_key }}"
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: "{{ docker_repo }}"
+        state: present
+
+    - name: Docker | Install packages
+      package:
+        name: "{{ docker_packages }}"
+        state: present
+  
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user to the Docker group
+      user:
+        name: "{{ docker_user }}"
+        groups: docker
+        append: yes
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+
+    - name: Display Docker version
+      debug:
+        msg: "Docker installed successfully. Version: {{ docker_version.stdout }}"
